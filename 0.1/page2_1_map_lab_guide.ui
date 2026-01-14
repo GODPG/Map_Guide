@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>page2_1_map_lab_guide</class>
+ <widget class="QWidget" name="page2_1_map_lab_guide">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>783</width>
+    <height>544</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">
+    border: 2px solid   rgb(75, 83, 96);
+
+background-color: rgb(41, 48, 58);
+
+    border-radius: 10px; 
+    padding: 5px; </string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="6" column="0" colspan="6">
+    <widget class="InteractiveView" name="graphicsView">
+     <property name="styleSheet">
+      <string notr="true">background-color: rgb(203, 203, 203);</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0">
+    <widget class="QPushButton" name="pbStartLabel">
+     <property name="styleSheet">
+      <string notr="true">
+    border: 2px solid   rgb(75, 83, 96);
+background-color: rgb(255, 255, 255);
+
+    border-radius: 10px; 
+    padding: 5px; </string>
+     </property>
+     <property name="text">
+      <string>StartLabel</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="1">
+    <widget class="QPushButton" name="pbEndLabel">
+     <property name="styleSheet">
+      <string notr="true">
+    border: 2px solid   rgb(75, 83, 96);
+background-color: rgb(255, 255, 255);
+
+    border-radius: 10px; 
+    padding: 5px; </string>
+     </property>
+     <property name="text">
+      <string>EndLabel</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="2">
+    <widget class="QPushButton" name="pbStartGuide">
+     <property name="styleSheet">
+      <string notr="true">
+    border: 2px solid   rgb(75, 83, 96);
+background-color: rgb(255, 255, 255);
+
+    border-radius: 10px; 
+    padding: 5px; </string>
+     </property>
+     <property name="text">
+      <string>StartGuide</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="3">
+    <widget class="QPushButton" name="pbEndGuide">
+     <property name="styleSheet">
+      <string notr="true">
+    border: 2px solid   rgb(75, 83, 96);
+background-color: rgb(255, 255, 255);
+
+    border-radius: 10px; 
+    padding: 5px; </string>
+     </property>
+     <property name="text">
+      <string>EndGuide</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="4">
+    <widget class="QPushButton" name="pbBack">
+     <property name="styleSheet">
+      <string notr="true">
+    border: 2px solid   rgb(75, 83, 96);
+background-color: rgb(255, 255, 255);
+
+    border-radius: 10px; 
+    padding: 5px; </string>
+     </property>
+     <property name="text">
+      <string>Back</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="5">
+    <widget class="QPushButton" name="pbLoadMap">
+     <property name="styleSheet">
+      <string notr="true">
+    border: 2px solid   rgb(75, 83, 96);
+background-color: rgb(255, 255, 255);
+
+    border-radius: 10px; 
+    padding: 5px; </string>
+     </property>
+     <property name="text">
+      <string>LoadMap</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>InteractiveView</class>
+   <extends>QGraphicsView</extends>
+   <header>untitled10\interactiveview.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

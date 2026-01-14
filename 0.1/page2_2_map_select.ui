@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>map_select</class>
+ <widget class="QWidget" name="map_select">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>641</width>
+    <height>620</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">border: 2px solid darkblue; 
+    
+    /* 2. 圆角半径: 10px */
+    border-radius: 10px; 
+    
+    
+background-color: rgb(60, 69, 84);
+    
+    /* 4. 填充 (可选): 增加按钮内边距，使圆角更明显 */
+    padding: 5px;</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="2">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="0" column="1">
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QPushButton" name="pbImport">
+         <property name="font">
+          <font>
+           <pointsize>10</pointsize>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">border: 2px solid darkblue; 
+background-color: rgb(248, 120, 29);
+color: rgb(255, 255, 255);
+    
+    /* 2. 圆角半径: 10px */
+    border-radius: 10px; 
+    
+    
+    /* 4. 填充 (可选): 增加按钮内边距，使圆角更明显 */
+    padding: 5px;</string>
+         </property>
+         <property name="text">
+          <string>Import</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pbRefresh">
+         <property name="font">
+          <font>
+           <pointsize>10</pointsize>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">border: 2px solid darkblue; 
+color: rgb(255, 255, 255);
+    
+    /* 2. 圆角半径: 10px */
+    border-radius: 10px; 
+    
+    /* 3. 背景色 (可选) */
+    background-color: lightblue;
+    
+    /* 4. 填充 (可选): 增加按钮内边距，使圆角更明显 */
+    padding: 5px;</string>
+         </property>
+         <property name="text">
+          <string>Refreash</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pbBack">
+         <property name="font">
+          <font>
+           <pointsize>11</pointsize>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">border: 2px solid darkblue; 
+color: rgb(255, 255, 255);
+    
+    /* 2. 圆角半径: 10px */
+    border-radius: 10px; 
+    
+    /* 3. 背景色 (可选) */
+    background-color: lightblue;
+    
+    /* 4. 填充 (可选): 增加按钮内边距，使圆角更明显 */
+    padding: 5px;</string>
+         </property>
+         <property name="text">
+          <string>Back</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QListWidget" name="listWidget">
+       <property name="minimumSize">
+        <size>
+         <width>500</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(61, 69, 83);
+
+
+    
+    /* 2. 圆角半径: 10px */
+    border-radius: 10px; 
+    border: 2.5px solid ;
+    
+    /* 4. 填充 (可选): 增加按钮内边距，使圆角更明显 */
+    padding: 10px;
+
+
+border-color: rgb(80, 97, 116);</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="0" column="0">
+    <spacer name="horizontalSpacer_2">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
