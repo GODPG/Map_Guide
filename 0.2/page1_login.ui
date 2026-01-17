@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>page1_login</class>
+ <widget class="QWidget" name="page1_login">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>360</width>
+    <height>640</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>360</width>
+    <height>640</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>360</width>
+    <height>640</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>登录</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">/* 全局背景 */
+QWidget#page1_login {
+        background-color: #F5F7FA;
+}
+
+/* 登录卡片容器 */
+QWidget#widget {
+        background-color: #FFFFFF;
+        border-radius: 24px;
+        border: 1px solid #EDF0F5;
+}
+
+/* --- 核心修改：标题样式 --- */
+QLabel#label_title {
+        color: #2D3748;
+        font-family: &quot;Microsoft YaHei&quot;, sans-serif;
+        font-weight: bold;
+        /* 【关键】强制背景透明，去掉黑块 */
+        background-color: transparent;
+}
+
+/* --- 核心修改：副标题样式 --- */
+QLabel#label_subtitle {
+        color: #718096;
+        font-family: &quot;Microsoft YaHei&quot;, sans-serif;
+        /* 【关键】强制背景透明，去掉黑块 */
+        background-color: transparent;
+}
+
+/* 输入框样式 */
+QLineEdit {
+        background-color: #F7F9FC;
+        border: none;
+        border-radius: 12px;
+        color: #2D3748;
+        padding-left: 16px;
+        padding-right: 16px;
+        font-size: 14px;
+}
+
+/* 输入框获得焦点 */
+QLineEdit:focus {
+        background-color: #FFFFFF;
+        border: 2px solid #4A90E2;
+}
+
+/* 登录按钮 */
+QPushButton#page1_login_push_Botton {
+        background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #4A90E2, stop:1 #63B8FF);
+        color: white;
+        border-radius: 12px;
+        border: none;
+        font-weight: bold;
+        font-size: 16px;
+        letter-spacing: 1px;
+}
+
+QPushButton#page1_login_push_Botton:hover {
+        background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #5B9DF2, stop:1 #74C4FF);
+}
+
+QPushButton#page1_login_push_Botton:pressed {
+        background-color: #357ABD;
+}
+
+/* 注册按钮 */
+QPushButton#page1_login_register {
+        background-color: transparent;
+        color: #718096;
+        border: none;
+        font-size: 14px;
+}
+
+QPushButton#page1_login_register:hover {
+        color: #4A90E2;
+        text-decoration: underline;
+}
+
+/* 【新增】获取验证码按钮样式 */
+QPushButton#btn_get_code {
+        background-color: #FFFFFF;
+        color: #4A90E2;
+        border: 1px solid #4A90E2;
+        border-radius: 12px;
+        font-weight: bold;
+        font-size: 13px;
+}
+QPushButton#btn_get_code:hover {
+        background-color: #F0F7FF;
+}
+QPushButton#btn_get_code:pressed {
+        background-color: #E1EFFF;
+}</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout_2">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>24</number>
+   </property>
+   <property name="topMargin">
+    <number>40</number>
+   </property>
+   <property name="rightMargin">
+    <number>24</number>
+   </property>
+   <property name="bottomMargin">
+    <number>40</number>
+   </property>
+   <item>
+    <widget class="QWidget" name="widget" native="true">
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <property name="spacing">
+       <number>20</number>
+      </property>
+      <property name="leftMargin">
+       <number>32</number>
+      </property>
+      <property name="topMargin">
+       <number>40</number>
+      </property>
+      <property name="rightMargin">
+       <number>32</number>
+      </property>
+      <property name="bottomMargin">
+       <number>32</number>
+      </property>
+      <item>
+       <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_title">
+        <property name="font">
+         <font>
+          <family>Microsoft YaHei</family>
+          <pointsize>22</pointsize>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>欢迎回来</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_subtitle">
+        <property name="font">
+         <font>
+          <family>Microsoft YaHei</family>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>请登录以继续使用</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="verticalSpacer_3">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="username">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="placeholderText">
+         <string>请输入手机号</string>
+        </property>
+       </widget>
+      </item>
+
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_Code">
+        <property name="spacing">
+         <number>10</number>
+        </property>
+        <item>
+         <widget class="QLineEdit" name="password">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>50</height>
+           </size>
+          </property>
+          <property name="echoMode">
+           <enum>QLineEdit::Normal</enum>
+          </property>
+          <property name="placeholderText">
+           <string>请输入验证码</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btn_get_code">
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>50</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>100</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="cursor">
+           <cursorShape>PointingHandCursor</cursorShape>
+          </property>
+          <property name="text">
+           <string>获取验证码</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <spacer name="verticalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>30</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="page1_login_push_Botton">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="cursor">
+         <cursorShape>PointingHandCursor</cursorShape>
+        </property>
+        <property name="text">
+         <string>登 录</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="page1_login_register">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>40</height>
+         </size>
+        </property>
+        <property name="cursor">
+         <cursorShape>PointingHandCursor</cursorShape>
+        </property>
+        <property name="text">
+         <string>还没有账号？立即注册</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="verticalSpacer_4">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>page2_operate_select</class>
+ <widget class="QWidget" name="page2_operate_select">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>360</width>
+    <height>640</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>360</width>
+    <height>640</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>360</width>
+    <height>640</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>功能选择</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">/* 全局背景：浅灰 */
+QWidget#page2_operate_select {
+        background-color: #F5F7FA;
+}
+
+/* 卡片容器：纯白 + 柔和边框/阴影 */
+QWidget#widget {
+        background-color: #FFFFFF;
+        border-radius: 24px;
+        border: 1px solid #EDF0F5;
+}
+
+/* 标题：深黑 */
+QLabel#label_title {
+        color: #2D3748;
+        font-family: &quot;Microsoft YaHei&quot;, sans-serif;
+        font-weight: bold;
+        background-color: transparent;
+}
+
+/* 副标题：浅灰 */
+QLabel#label_subtitle {
+        color: #718096;
+        font-family: &quot;Microsoft YaHei&quot;, sans-serif;
+        background-color: transparent;
+}
+
+/* --- 主要按钮 (Primary Button) ---
+   用于“地图标注”和“地图选择” */
+QPushButton[class=&quot;primaryBtn&quot;] {
+        background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #4A90E2, stop:1 #63B8FF);
+        color: white;
+        border-radius: 12px;
+        border: none;
+        font-weight: bold;
+        font-size: 16px;
+        letter-spacing: 1px;
+        padding: 12px;
+}
+
+QPushButton[class=&quot;primaryBtn&quot;]:hover {
+        background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #5B9DF2, stop:1 #74C4FF);
+}
+
+QPushButton[class=&quot;primaryBtn&quot;]:pressed {
+        background-color: #357ABD;
+}
+
+/* --- 次要按钮 (Secondary Button) ---
+   用于“导出数据”，白底蓝边 */
+QPushButton[class=&quot;secondaryBtn&quot;] {
+        background-color: #FFFFFF;
+        color: #4A90E2;
+        border: 2px solid #E2E8F0;
+        border-radius: 12px;
+        font-weight: bold;
+        font-size: 15px;
+}
+
+QPushButton[class=&quot;secondaryBtn&quot;]:hover {
+        border: 2px solid #4A90E2;
+        background-color: #F7FAFC;
+}
+
+QPushButton[class=&quot;secondaryBtn&quot;]:pressed {
+        background-color: #EDF2F7;
+}
+
+/* --- 退出按钮 (Ghost Button) ---
+   用于“退出”，纯文字 */
+QPushButton[class=&quot;ghostBtn&quot;] {
+        background-color: transparent;
+        color: #A0AEC0;
+        border: none;
+        font-size: 14px;
+}
+
+QPushButton[class=&quot;ghostBtn&quot;]:hover {
+        color: #E53E3E; /* 悬停变红，提示这是退出操作 */
+        text-decoration: underline;
+}</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout_2">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>24</number>
+   </property>
+   <property name="topMargin">
+    <number>40</number>
+   </property>
+   <property name="rightMargin">
+    <number>24</number>
+   </property>
+   <property name="bottomMargin">
+    <number>40</number>
+   </property>
+   <item>
+    <widget class="QWidget" name="widget" native="true">
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <property name="spacing">
+       <number>16</number>
+      </property>
+      <property name="leftMargin">
+       <number>32</number>
+      </property>
+      <property name="topMargin">
+       <number>40</number>
+      </property>
+      <property name="rightMargin">
+       <number>32</number>
+      </property>
+      <property name="bottomMargin">
+       <number>32</number>
+      </property>
+      <item>
+       <spacer name="verticalSpacer_3">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_title">
+        <property name="font">
+         <font>
+          <family>Microsoft YaHei</family>
+          <pointsize>20</pointsize>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>功能中心</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_subtitle">
+        <property name="font">
+         <font>
+          <family>Microsoft YaHei</family>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>请选择您需要执行的操作</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>30</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="page2_import_pb">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>60</height>
+         </size>
+        </property>
+        <property name="cursor">
+         <cursorShape>PointingHandCursor</cursorShape>
+        </property>
+        <property name="text">
+         <string>地图标注 (Import)</string>
+        </property>
+        <property name="class" stdset="0">
+         <string>primaryBtn</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="page2_select_pb">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>60</height>
+         </size>
+        </property>
+        <property name="cursor">
+         <cursorShape>PointingHandCursor</cursorShape>
+        </property>
+        <property name="text">
+         <string>地图导航 (Select)</string>
+        </property>
+        <property name="class" stdset="0">
+         <string>primaryBtn</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="page2_export_pb">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>50</height>
+         </size>
+        </property>
+        <property name="cursor">
+         <cursorShape>PointingHandCursor</cursorShape>
+        </property>
+        <property name="text">
+         <string>导出数据 (Export)</string>
+        </property>
+        <property name="class" stdset="0">
+         <string>secondaryBtn</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="verticalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="page2_exit_pb">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>40</height>
+         </size>
+        </property>
+        <property name="cursor">
+         <cursorShape>PointingHandCursor</cursorShape>
+        </property>
+        <property name="text">
+         <string>安全退出</string>
+        </property>
+        <property name="class" stdset="0">
+         <string>ghostBtn</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="verticalSpacer_4">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>10</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

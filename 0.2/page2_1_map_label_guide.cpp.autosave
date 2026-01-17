@@ -1,0 +1,986 @@
+#include "page2_1_map_label_guide.h"
+#include "ui_page2_1_map_label_guide.h"
+
+#include <QGraphicsView>
+#include <QGraphicsScene>
+#include <QGraphicsPixmapItem>
+#include <QGraphicsEllipseItem>
+#include <QGraphicsTextItem>
+#include <QGraphicsPathItem>
+#include <QPainterPath>
+#include <QPen>
+#include <QBrush>
+
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QMenu>
+
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QRegularExpression>
+
+#include <queue>
+#include <limits>
+#include <cmath>
+
+// -------------------- Scene subclass (for mouse events) --------------------
+class MapScene : public QGraphicsScene
+{
+public:
+    using QGraphicsScene::QGraphicsScene;
+    
+    std::function<void(const QPointF&)> onLeftPress;
+    std::function<void(const QPointF&)> onLeftMove;
+    std::function<void(const QPointF&)> onLeftRelease;
+    std::function<void(const QPointF&)> onRightClick;
+    
+protected:
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override
+    {
+        if (event->button() == Qt::LeftButton) {
+            if (onLeftPress) onLeftPress(event->scenePos());
+            // 不直接 return，让 item 仍可被选中/拖动（如果你后续开启拖动）
+        } else if (event->button() == Qt::RightButton) {
+            if (onRightClick) onRightClick(event->scenePos());
+        }
+        QGraphicsScene::mousePressEvent(event);
+    }
+    
+    void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override
+    {
+        if (onLeftMove) onLeftMove(event->scenePos());
+        QGraphicsScene::mouseMoveEvent(event);
+    }
+    
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override
+    {
+        if (event->button() == Qt::LeftButton) {
+            if (onLeftRelease) onLeftRelease(event->scenePos());
+        }
+        QGraphicsScene::mouseReleaseEvent(event);
+    }
+};
+
+// -------------------- Helpers: node/edge item data keys --------------------
+static constexpr int kItemTypeKey = 0;   // 0=node, 1=edge
+static constexpr int kItemIdKey   = 1;   // nodeId/edgeId
+static constexpr int kTypeNode    = 0;
+static constexpr int kTypeEdge    = 1;
+
+// -------------------- Ctor/Dtor --------------------
+page2_1_map_lab_guide::page2_1_map_lab_guide(QWidget *parent)
+    : QWidget(parent)
+    , ui(new Ui::page2_1_map_lab_guide)
+{
+    ui->setupUi(this);
+    
+    ensureGraphicsView();
+    initScene();
+    bindButtonsByObjectName();
+    updateUiStateHint();
+}
+
+page2_1_map_lab_guide::~page2_1_map_lab_guide()
+{
+    delete ui;
+}
+
+// -------------------- UI setup --------------------
+void page2_1_map_lab_guide::ensureGraphicsView()
+{
+    // 如果你的 .ui 里没有 graphicsView，尽量让代码也能跑起来
+    auto *gv = this->findChild<QGraphicsView*>("graphicsView");
+    if (!gv) {
+        // 程序创建一个 GraphicsView（简单兜底）
+        gv = new QGraphicsView(this);
+        gv->setObjectName("graphicsView");
+        gv->setMinimumSize(800, 600);
+        
+        auto *layout = this->layout();
+        if (layout) {
+            layout->addWidget(gv);
+        } else {
+            // 没有布局就粗暴放满
+            gv->setGeometry(this->rect());
+            gv->raise();
+        }
+    }
+    
+    // 通用视图设置
+    gv->setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
+    gv->setDragMode(QGraphicsView::ScrollHandDrag);
+    gv->setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
+    gv->setResizeAnchor(QGraphicsView::AnchorUnderMouse);
+}
+
+void page2_1_map_lab_guide::initScene()
+{
+    auto *gv = this->findChild<QGraphicsView*>("graphicsView");
+    if (!gv) return;
+    
+    auto *scene = new MapScene(this);
+    m_scene = scene;
+    
+    gv->setScene(m_scene);
+    
+    // 预览折线 item
+    m_previewPathItem = new QGraphicsPathItem();
+    QPen previewPen(Qt::blue);
+    previewPen.setStyle(Qt::DashLine);
+    previewPen.setWidth(2);
+    m_previewPathItem->setPen(previewPen);
+    m_previewPathItem->setZValue(50);
+    m_previewPathItem->setVisible(false);
+    m_scene->addItem(m_previewPathItem);
+    
+    // 绑定 scene 事件回调到本页面
+    scene->onLeftPress = [this](const QPointF &p){ handleSceneLeftPress(p); };
+    scene->onLeftMove = [this](const QPointF &p){ handleSceneLeftMove(p); };
+    scene->onLeftRelease = [this](const QPointF &p){ handleSceneLeftRelease(p); };
+    scene->onRightClick = [this](const QPointF &p){ handleSceneRightClick(p); };
+}
+
+void page2_1_map_lab_guide::bindButtonsByObjectName()
+{
+    auto bind = [this](const char* objName, auto slotFunc){
+        if (auto *btn = this->findChild<QPushButton*>(objName)) {
+            connect(btn, &QPushButton::clicked, this, slotFunc);
+        }
+    };
+    
+    bind("pbBack",       &page2_1_map_lab_guide::onBack);
+    bind("pbLoadMap",    &page2_1_map_lab_guide::onLoadMap);
+    bind("pbStartLabel", &page2_1_map_lab_guide::onStartLabel);
+    bind("pbEndLabel",   &page2_1_map_lab_guide::onEndLabel);
+    bind("pbStartGuide", &page2_1_map_lab_guide::onStartGuide);
+    bind("pbEndGuide",   &page2_1_map_lab_guide::onEndGuide);
+}
+
+void page2_1_map_lab_guide::updateUiStateHint()
+{
+    switch (m_state) {
+    case AppState::IDLE:
+        this->setWindowTitle("Map Lab/Guide - IDLE");
+        break;
+    case AppState::LABELING:
+        this->setWindowTitle("Map Lab/Guide - LABELING");
+        break;
+    case AppState::GUIDING:
+        this->setWindowTitle("Map Lab/Guide - GUIDING");
+        break;
+    }
+}
+
+// -------------------- Public APIs --------------------
+bool page2_1_map_lab_guide::loadMapImage(const QString &imagePath)
+{
+    if (imagePath.isEmpty()) return false;
+    
+    QFileInfo fi(imagePath);
+    if (!fi.exists()) {
+        QMessageBox::warning(this, "加载失败", "图片文件不存在。");
+        return false;
+    }
+    
+    QPixmap pix(imagePath);
+    if (pix.isNull()) {
+        QMessageBox::warning(this, "加载失败", "无法读取图片（格式不支持或文件损坏）。");
+        return false;
+    }
+    
+    m_mapImageAbsPath = fi.absoluteFilePath();
+    
+    if (!m_scene) return false;
+    
+    // 清除旧背景
+    if (m_bgItem) {
+        m_scene->removeItem(m_bgItem);
+        delete m_bgItem;
+        m_bgItem = nullptr;
+    }
+    
+    m_bgItem = new QGraphicsPixmapItem(pix);
+    m_bgItem->setZValue(-1000);
+    m_scene->addItem(m_bgItem);
+    
+    // 设置 scene 范围
+    m_scene->setSceneRect(m_bgItem->boundingRect());
+    
+    // 视图适配
+    if (auto *gv = this->findChild<QGraphicsView*>("graphicsView")) {
+        gv->fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
+    }
+    
+    emit mapModified();
+    return true;
+}
+
+void page2_1_map_lab_guide::clearAll()
+{
+    m_nodes.clear();
+    m_edges.clear();
+    m_adj.clear();
+    
+    m_isDrawingEdge = false;
+    m_edgeFromNodeId = -1;
+    m_currentPolyline.clear();
+    
+    m_startNodeId = -1;
+    m_endNodeId = -1;
+    
+    clearHighlight();
+    
+    if (m_scene) {
+        // 保留背景和预览 item 的话可以不清空；这里重建更干净
+        QList<QGraphicsItem*> items = m_scene->items();
+        for (auto *it : items) {
+            if (it == m_bgItem || it == m_previewPathItem) continue;
+            m_scene->removeItem(it);
+            delete it;
+        }
+    }
+    
+    emit mapModified();
+}
+
+// -------------------- Slots (buttons) --------------------
+void page2_1_map_lab_guide::onBack()
+{
+    emit backToMenu();
+}
+
+void page2_1_map_lab_guide::onLoadMap()
+{
+    QString path = QFileDialog::getOpenFileName(
+        this,
+        "选择地图图片",
+        QString(),
+        "Images (*.png *.jpg *.jpeg *.bmp);;All Files (*)"
+        );
+    if (path.isEmpty()) return;
+    
+    // PDF：这里只做提示，实际转换你可以后续加（或要求用户预先转图）
+    if (QFileInfo(path).suffix().compare("pdf", Qt::CaseInsensitive) == 0) {
+        QMessageBox::information(this, "提示", "PDF 暂不直接支持，请先转换为 png/jpg/bmp。");
+        return;
+    }
+    
+    loadMapImage(path);
+    m_state = AppState::IDLE;
+    updateUiStateHint();
+}
+
+void page2_1_map_lab_guide::onStartLabel()
+{
+    if (m_mapImageAbsPath.isEmpty() || !m_bgItem) {
+        QMessageBox::information(this, "提示", "请先导入地图图片。");
+        return;
+    }
+    m_state = AppState::LABELING;
+    m_startNodeId = -1;
+    m_endNodeId = -1;
+    m_isDrawingEdge = false;
+    m_edgeFromNodeId = -1;
+    m_currentPolyline.clear();
+    clearHighlight();
+    updateUiStateHint();
+}
+
+void page2_1_map_lab_guide::onEndLabel()
+{
+    if (m_state != AppState::LABELING) {
+        QMessageBox::information(this, "提示", "当前不在标注模式。");
+        return;
+    }
+    // 标注结束：构建邻接表，为导引准备
+    buildAdjacency();
+    m_state = AppState::IDLE;
+    updateUiStateHint();
+    
+    // 自动保存（可选）：指导要求“标注完成后系统开始解析并保存”
+    if (!saveCurrentProject()) {
+        QMessageBox::warning(this, "保存失败", "标注结束后自动保存失败，请检查目录权限。");
+    }
+}
+
+void page2_1_map_lab_guide::onStartGuide()
+{
+    if (m_nodes.size() < 2 || m_edges.empty()) {
+        QMessageBox::information(this, "提示", "请先完成标注（至少2个节点与1条路径）。");
+        return;
+    }
+    buildAdjacency();
+    clearHighlight();
+    
+    m_state = AppState::GUIDING;
+    m_startNodeId = -1;
+    m_endNodeId = -1;
+    
+    updateUiStateHint();
+    QMessageBox::information(this, "导引模式", "请依次点击起点节点与终点节点以计算最短路径。");
+}
+
+void page2_1_map_lab_guide::onEndGuide()
+{
+    if (m_state != AppState::GUIDING) {
+        QMessageBox::information(this, "提示", "当前不在导引模式。");
+        return;
+    }
+    
+    // 导引结束：建议保存“完整视图截图”等
+    if (!saveCurrentProject()) {
+        QMessageBox::warning(this, "保存失败", "导引结束保存失败，请检查目录权限。");
+    }
+    
+    m_state = AppState::IDLE;
+    m_startNodeId = -1;
+    m_endNodeId = -1;
+    updateUiStateHint();
+}
+
+// -------------------- Scene interaction --------------------
+void page2_1_map_lab_guide::handleSceneLeftPress(const QPointF &scenePos)
+{
+    if (!m_bgItem) return;
+    
+    if (m_state == AppState::LABELING) {
+        // 1) 若点到节点附近：准备画边
+        int nid = findNearestNodeId(scenePos);
+        if (nid >= 0) {
+            m_isDrawingEdge = true;
+            m_edgeFromNodeId = nid;
+            m_currentPolyline.clear();
+            m_currentPolyline.push_back(m_nodes[nid].pos);
+            m_currentPolyline.push_back(scenePos);
+            
+            m_previewPathItem->setVisible(true);
+            updatePreviewPath();
+            return;
+        }
+        
+        // 2) 点空白：新增节点
+        addNodeAt(scenePos);
+        emit mapModified();
+        return;
+    }
+    
+    if (m_state == AppState::GUIDING) {
+        int nid = findNearestNodeId(scenePos);
+        if (nid < 0) return;
+        
+        if (m_startNodeId < 0) {
+            m_startNodeId = nid;
+            QMessageBox::information(this, "导引", QString("已选择起点：Node %1").arg(nid));
+        } else if (m_endNodeId < 0) {
+            if (nid == m_startNodeId) {
+                QMessageBox::warning(this, "导引", "终点不能与起点相同。");
+                return;
+            }
+            m_endNodeId = nid;
+            computeAndShowShortestPath();
+        } else {
+            // 第三次点击：重选
+            m_startNodeId = nid;
+            m_endNodeId = -1;
+            clearHighlight();
+            QMessageBox::information(this, "导引", QString("重新选择起点：Node %1").arg(nid));
+        }
+    }
+}
+
+void page2_1_map_lab_guide::handleSceneLeftMove(const QPointF &scenePos)
+{
+    if (m_state != AppState::LABELING) return;
+    if (!m_isDrawingEdge) return;
+    
+    // 画折线：移动超过一定距离才采样，避免点太密
+    const double minStep = 6.0;
+    if (!m_currentPolyline.empty()) {
+        QPointF last = m_currentPolyline.back();
+        double dx = scenePos.x() - last.x();
+        double dy = scenePos.y() - last.y();
+        if (std::sqrt(dx*dx + dy*dy) < minStep) {
+            // 只更新末尾点，让预览线跟随鼠标
+            if (m_currentPolyline.size() >= 2) {
+                m_currentPolyline.back() = scenePos;
+            }
+            updatePreviewPath();
+            return;
+        }
+    }
+    
+    // 追加新点
+    m_currentPolyline.push_back(scenePos);
+    updatePreviewPath();
+}
+
+void page2_1_map_lab_guide::handleSceneLeftRelease(const QPointF &scenePos)
+{
+    if (m_state != AppState::LABELING) return;
+    if (!m_isDrawingEdge) return;
+    
+    m_isDrawingEdge = false;
+    m_previewPathItem->setVisible(false);
+    
+    int toId = findNearestNodeId(scenePos);
+    if (toId < 0) {
+        // 未吸附到终点，取消
+        m_edgeFromNodeId = -1;
+        m_currentPolyline.clear();
+        return;
+    }
+    if (toId == m_edgeFromNodeId) {
+        // 起终相同，取消
+        m_edgeFromNodeId = -1;
+        m_currentPolyline.clear();
+        return;
+    }
+    
+    // 折线末端吸附到终点真实节点位置
+    if (!m_currentPolyline.empty()) {
+        m_currentPolyline.back() = m_nodes[toId].pos;
+    } else {
+        m_currentPolyline.push_back(m_nodes[m_edgeFromNodeId].pos);
+        m_currentPolyline.push_back(m_nodes[toId].pos);
+    }
+    
+    // 禁止重复边（无向）
+    if (findEdgeIdBetween(m_edgeFromNodeId, toId) >= 0) {
+        QMessageBox::information(this, "提示", "该两节点之间已存在路径，已忽略重复添加。");
+        m_edgeFromNodeId = -1;
+        m_currentPolyline.clear();
+        return;
+    }
+    
+    addEdge(m_edgeFromNodeId, toId, m_currentPolyline);
+    m_edgeFromNodeId = -1;
+    m_currentPolyline.clear();
+    
+    emit mapModified();
+}
+
+void page2_1_map_lab_guide::handleSceneRightClick(const QPointF &scenePos)
+{
+    if (!m_scene) return;
+    
+    QGraphicsItem *clicked = m_scene->itemAt(scenePos, QTransform());
+    int type = -1, id = -1;
+    if (clicked) {
+        type = clicked->data(kItemTypeKey).toInt();
+        id = clicked->data(kItemIdKey).toInt();
+    }
+    
+    QMenu menu(this);
+    
+    if (type == kTypeNode) {
+        QAction *actAddStreet = menu.addAction("导入街景图...");
+        QAction *actDelNode   = menu.addAction("删除该节点");
+        QAction *act = menu.exec(QCursor::pos());
+        if (!act) return;
+        
+        if (act == actAddStreet) addStreetImageToNode(id);
+        if (act == actDelNode)   deleteNode(id);
+        
+    } else if (type == kTypeEdge) {
+        QAction *actDelEdge = menu.addAction("删除该路径");
+        QAction *act = menu.exec(QCursor::pos());
+        if (!act) return;
+        if (act == actDelEdge) deleteEdge(id);
+        
+    } else {
+        QAction *actLoad = menu.addAction("导入地图...");
+        QAction *act = menu.exec(QCursor::pos());
+        if (!act) return;
+        if (act == actLoad) onLoadMap();
+    }
+}
+
+// -------------------- Model ops --------------------
+int page2_1_map_lab_guide::addNodeAt(const QPointF &scenePos, const QString &name)
+{
+    int id = static_cast<int>(m_nodes.size());
+    Node n;
+    n.id = id;
+    n.name = name.isEmpty() ? QString("Node %1").arg(id) : name;
+    n.pos = scenePos;
+    m_nodes.push_back(n);
+    
+    // draw node item
+    const double r = 6.0;
+    auto *circle = m_scene->addEllipse(scenePos.x()-r, scenePos.y()-r, 2*r, 2*r,
+                                       QPen(Qt::black), QBrush(Qt::yellow));
+    circle->setZValue(100);
+    circle->setData(kItemTypeKey, kTypeNode);
+    circle->setData(kItemIdKey, id);
+    circle->setFlag(QGraphicsItem::ItemIsSelectable, true);
+    
+    auto *label = m_scene->addText(QString::number(id));
+    label->setPos(scenePos.x() + 8, scenePos.y() - 10);
+    label->setZValue(101);
+    // label 本身也标识为 node，便于右键
+    label->setData(kItemTypeKey, kTypeNode);
+    label->setData(kItemIdKey, id);
+    
+    return id;
+}
+
+int page2_1_map_lab_guide::addEdge(int fromId, int toId, const std::vector<QPointF> &polyline)
+{
+    int id = static_cast<int>(m_edges.size());
+    Edge e;
+    e.id = id;
+    e.from = fromId;
+    e.to = toId;
+    e.polyline = polyline;
+    e.length = calcLength(polyline) * m_scale;
+    m_edges.push_back(e);
+    
+    // draw edge path item
+    QPainterPath path;
+    if (!polyline.empty()) {
+        path.moveTo(polyline.front());
+        for (size_t i=1;i<polyline.size();++i) path.lineTo(polyline[i]);
+    }
+    
+    auto *item = m_scene->addPath(path, QPen(Qt::darkGray, 2));
+    item->setZValue(10);
+    item->setData(kItemTypeKey, kTypeEdge);
+    item->setData(kItemIdKey, id);
+    
+    return id;
+}
+
+void page2_1_map_lab_guide::deleteNode(int nodeId)
+{
+    if (nodeId < 0 || nodeId >= (int)m_nodes.size()) return;
+    
+    // 删除与该节点相关的边
+    for (int i = (int)m_edges.size()-1; i >= 0; --i) {
+        if (m_edges[i].from == nodeId || m_edges[i].to == nodeId) {
+            deleteEdge(m_edges[i].id);
+        }
+    }
+    
+    // 标记节点无效（为了简单避免重新编号造成大量重映射）
+    // 更严格的做法：真正删除并重排 id + 重建所有 item
+    m_nodes[nodeId].name = "[DELETED]";
+    m_nodes[nodeId].pos = QPointF(-1e9, -1e9);
+    m_nodes[nodeId].imagePathsAbs.clear();
+    
+    redrawAll();
+    buildAdjacency();
+    emit mapModified();
+}
+
+void page2_1_map_lab_guide::deleteEdge(int edgeId)
+{
+    if (edgeId < 0 || edgeId >= (int)m_edges.size()) return;
+    
+    // 同样采用“标记删除”简化实现
+    m_edges[edgeId].from = -1;
+    m_edges[edgeId].to   = -1;
+    m_edges[edgeId].polyline.clear();
+    m_edges[edgeId].length = 0;
+    
+    redrawAll();
+    buildAdjacency();
+    emit mapModified();
+}
+
+int page2_1_map_lab_guide::findNearestNodeId(const QPointF &scenePos, double maxDistPx) const
+{
+    int bestId = -1;
+    double bestD = maxDistPx;
+    
+    for (const auto &n : m_nodes) {
+        if (n.id < 0) continue;
+        if (n.pos.x() < -1e8) continue; // deleted
+        double dx = scenePos.x() - n.pos.x();
+        double dy = scenePos.y() - n.pos.y();
+        double d = std::sqrt(dx*dx + dy*dy);
+        if (d < bestD) {
+            bestD = d;
+            bestId = n.id;
+        }
+    }
+    return bestId;
+}
+
+int page2_1_map_lab_guide::findEdgeIdBetween(int a, int b) const
+{
+    for (const auto &e : m_edges) {
+        if (e.from < 0 || e.to < 0) continue;
+        if ((e.from == a && e.to == b) || (e.from == b && e.to == a)) return e.id;
+    }
+    return -1;
+}
+
+double page2_1_map_lab_guide::calcLength(const std::vector<QPointF> &polyline)
+{
+    double len = 0.0;
+    for (size_t i = 1; i < polyline.size(); ++i) {
+        double dx = polyline[i].x() - polyline[i-1].x();
+        double dy = polyline[i].y() - polyline[i-1].y();
+        len += std::sqrt(dx*dx + dy*dy);
+    }
+    return len;
+}
+
+// -------------------- Graphics ops --------------------
+void page2_1_map_lab_guide::redrawAll()
+{
+    if (!m_scene) return;
+    
+    // 删除除背景与预览外的所有 item
+    QList<QGraphicsItem*> items = m_scene->items();
+    for (auto *it : items) {
+        if (it == m_bgItem || it == m_previewPathItem) continue;
+        m_scene->removeItem(it);
+        delete it;
+    }
+    
+    // 重画边
+    for (const auto &e : m_edges) {
+        if (e.from < 0 || e.to < 0) continue;
+        if (e.polyline.empty()) continue;
+        
+        QPainterPath path;
+        path.moveTo(e.polyline.front());
+        for (size_t i=1;i<e.polyline.size();++i) path.lineTo(e.polyline[i]);
+        
+        auto *item = m_scene->addPath(path, QPen(Qt::darkGray, 2));
+        item->setZValue(10);
+        item->setData(kItemTypeKey, kTypeEdge);
+        item->setData(kItemIdKey, e.id);
+    }
+    
+    // 重画节点
+    for (const auto &n : m_nodes) {
+        if (n.id < 0) continue;
+        if (n.pos.x() < -1e8) continue; // deleted
+        const double r = 6.0;
+        auto *circle = m_scene->addEllipse(n.pos.x()-r, n.pos.y()-r, 2*r, 2*r,
+                                           QPen(Qt::black), QBrush(Qt::yellow));
+        circle->setZValue(100);
+        circle->setData(kItemTypeKey, kTypeNode);
+        circle->setData(kItemIdKey, n.id);
+        
+        auto *label = m_scene->addText(QString::number(n.id));
+        label->setPos(n.pos.x() + 8, n.pos.y() - 10);
+        label->setZValue(101);
+        label->setData(kItemTypeKey, kTypeNode);
+        label->setData(kItemIdKey, n.id);
+    }
+    
+    // 重画高亮（如果有）
+    if (!m_highlightEdgeIds.empty()) {
+        highlightEdges(m_highlightEdgeIds);
+    }
+}
+
+void page2_1_map_lab_guide::clearHighlight()
+{
+    m_highlightEdgeIds.clear();
+    redrawAll();
+}
+
+void page2_1_map_lab_guide::highlightEdges(const std::vector<int> &edgeIds)
+{
+    m_highlightEdgeIds = edgeIds;
+    
+    // 先全部重画，再把高亮边覆盖画一层红色粗线
+    redrawAll();
+    
+    for (int eid : edgeIds) {
+        if (eid < 0 || eid >= (int)m_edges.size()) continue;
+        const auto &e = m_edges[eid];
+        if (e.from < 0 || e.to < 0) continue;
+        if (e.polyline.empty()) continue;
+        
+        QPainterPath path;
+        path.moveTo(e.polyline.front());
+        for (size_t i=1;i<e.polyline.size();++i) path.lineTo(e.polyline[i]);
+        
+        auto *hl = m_scene->addPath(path, QPen(Qt::red, 4));
+        hl->setZValue(20);
+        // 高亮层也可视作 edge（右键可删除）
+        hl->setData(kItemTypeKey, kTypeEdge);
+        hl->setData(kItemIdKey, eid);
+    }
+}
+
+void page2_1_map_lab_guide::updatePreviewPath()
+{
+    if (!m_previewPathItem) return;
+    if (m_currentPolyline.size() < 2) return;
+    
+    QPainterPath path;
+    path.moveTo(m_currentPolyline.front());
+    for (size_t i=1;i<m_currentPolyline.size();++i) path.lineTo(m_currentPolyline[i]);
+    m_previewPathItem->setPath(path);
+}
+
+// -------------------- Streetscape --------------------
+void page2_1_map_lab_guide::addStreetImageToNode(int nodeId)
+{
+    if (nodeId < 0 || nodeId >= (int)m_nodes.size()) return;
+    
+    QString img = QFileDialog::getOpenFileName(
+        this,
+        "选择街景图片",
+        QString(),
+        "Images (*.png *.jpg *.jpeg *.bmp);;All Files (*)"
+        );
+    if (img.isEmpty()) return;
+    
+    QFileInfo fi(img);
+    if (!fi.exists()) return;
+    
+    m_nodes[nodeId].imagePathsAbs.push_back(fi.absoluteFilePath());
+    emit mapModified();
+    
+    QMessageBox::information(this, "已添加", QString("已为 Node %1 添加街景图：\n%2").arg(nodeId).arg(fi.fileName()));
+}
+
+// -------------------- Dijkstra --------------------
+void page2_1_map_lab_guide::buildAdjacency()
+{
+    int n = (int)m_nodes.size();
+    m_adj.assign(n, {});
+    
+    for (const auto &e : m_edges) {
+        if (e.from < 0 || e.to < 0) continue;
+        if (e.from >= n || e.to >= n) continue;
+        
+        // 忽略 deleted node
+        if (m_nodes[e.from].pos.x() < -1e8) continue;
+        if (m_nodes[e.to].pos.x() < -1e8) continue;
+        
+        m_adj[e.from].push_back({e.to, e.length, e.id});
+        m_adj[e.to].push_back({e.from, e.length, e.id});
+    }
+}
+
+bool page2_1_map_lab_guide::dijkstra(int startId, int endId,
+                                     std::vector<int> &outNodePath, double &outDist)
+{
+    outNodePath.clear();
+    outDist = std::numeric_limits<double>::infinity();
+    
+    if (startId < 0 || endId < 0) return false;
+    if (startId >= (int)m_adj.size() || endId >= (int)m_adj.size()) return false;
+    
+    const int n = (int)m_adj.size();
+    std::vector<double> dist(n, std::numeric_limits<double>::infinity());
+    std::vector<int> prev(n, -1);
+    
+    using P = std::pair<double,int>;
+    std::priority_queue<P, std::vector<P>, std::greater<P>> pq;
+    
+    dist[startId] = 0.0;
+    pq.push({0.0, startId});
+    
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+        if (d > dist[u]) continue;
+        if (u == endId) break;
+        
+        for (const auto &ae : m_adj[u]) {
+            int v = ae.to;
+            double nd = d + ae.w;
+            if (nd < dist[v]) {
+                dist[v] = nd;
+                prev[v] = u;
+                pq.push({nd, v});
+            }
+        }
+    }
+    
+    if (!std::isfinite(dist[endId])) return false;
+    
+    // 回溯路径
+    for (int cur = endId; cur != -1; cur = prev[cur]) outNodePath.push_back(cur);
+    std::reverse(outNodePath.begin(), outNodePath.end());
+    
+    outDist = dist[endId];
+    return true;
+}
+
+void page2_1_map_lab_guide::computeAndShowShortestPath()
+{
+    if (m_startNodeId < 0 || m_endNodeId < 0) return;
+    
+    buildAdjacency();
+    
+    std::vector<int> nodePath;
+    double dist = 0.0;
+    if (!dijkstra(m_startNodeId, m_endNodeId, nodePath, dist)) {
+        QMessageBox::warning(this, "不可到达", "起点与终点之间不存在可达路径。");
+        clearHighlight();
+        return;
+    }
+    
+    // 把 nodePath 转成 edgeId 列表用于高亮
+    std::vector<int> edgeIds;
+    for (size_t i=1;i<nodePath.size();++i) {
+        int a = nodePath[i-1];
+        int b = nodePath[i];
+        int eid = findEdgeIdBetween(a, b);
+        if (eid >= 0) edgeIds.push_back(eid);
+    }
+    
+    highlightEdges(edgeIds);
+    QMessageBox::information(this, "最短路径",
+                             QString("最短路径节点数：%1\n总距离：%2")
+                                 .arg((int)nodePath.size())
+                                 .arg(dist));
+    
+    emit mapModified();
+}
+
+// -------------------- Save project --------------------
+QString page2_1_map_lab_guide::projectRootDir() const
+{
+    // 按指导风格：在程序当前工作目录创建 Map_guide
+    // 你也可以改成 QStandardPaths::AppDataLocation 更规范
+    return QDir::cleanPath(QDir::currentPath() + "/Map_guide");
+}
+
+int page2_1_map_lab_guide::allocateNextMapId(const QString &rootDirAbs) const
+{
+    QDir root(rootDirAbs);
+    if (!root.exists()) return 1;
+    
+    int maxId = 0;
+    const auto entries = root.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+    QRegularExpression re(R"(Saved_Map#(\d+))");
+    
+    for (const QString &name : entries) {
+        auto m = re.match(name);
+        if (m.hasMatch()) {
+            bool ok = false;
+            int id = m.captured(1).toInt(&ok);
+            if (ok) maxId = std::max(maxId, id);
+        }
+    }
+    return maxId + 1;
+}
+
+bool page2_1_map_lab_guide::saveCurrentProject()
+{
+    if (m_mapImageAbsPath.isEmpty() || !m_bgItem) {
+        // 没地图就不保存
+        return false;
+    }
+    
+    const QString root = projectRootDir();
+    QDir().mkpath(root);
+    
+    const int mapId = allocateNextMapId(root);
+    const QString projDir = QDir::cleanPath(root + QString("/Saved_Map#%1").arg(mapId));
+    const QString dataDir = QDir::cleanPath(projDir + "/guide_data");
+    const QString streetDir = QDir::cleanPath(projDir + "/streetscape");
+    
+    QDir().mkpath(projDir);
+    QDir().mkpath(dataDir);
+    QDir().mkpath(streetDir);
+    
+    // 1) 保存背景图（copy到 map_image.png）
+    {
+        const QString dst = QDir::cleanPath(projDir + "/map_image.png");
+        if (QFile::exists(dst)) QFile::remove(dst);
+        if (!QFile::copy(m_mapImageAbsPath, dst)) {
+            // 有些情况下 copy 失败（权限/路径），提示但不直接崩
+            QMessageBox::warning(this, "保存失败", "背景图复制失败。");
+            return false;
+        }
+    }
+    
+    // 2) 保存当前视图截图 map_view.png（含标注/高亮）
+    {
+        auto *gv = this->findChild<QGraphicsView*>("graphicsView");
+        if (gv) {
+            QPixmap shot = gv->grab();
+            shot.save(QDir::cleanPath(projDir + "/map_view.png"));
+        }
+    }
+    
+    // 3) 保存 JSON：nodes + edges（街景写相对路径）
+    QJsonObject rootObj;
+    rootObj["map_id"] = mapId;
+    rootObj["scale"] = m_scale;
+    rootObj["map_image"] = "map_image.png"; // 相对路径
+    
+    QJsonArray nodesArr;
+    for (const auto &n : m_nodes) {
+        if (n.id < 0) continue;
+        if (n.pos.x() < -1e8) continue; // deleted
+        
+        QJsonObject no;
+        no["id"] = n.id;
+        no["name"] = n.name;
+        no["x"] = n.pos.x();
+        no["y"] = n.pos.y();
+        
+        // streetscape：把绝对路径图片拷贝到 streetscape/Node{id}_{k}.ext
+        QJsonArray imgRelArr;
+        for (size_t k=0;k<n.imagePathsAbs.size();++k) {
+            QFileInfo fi(n.imagePathsAbs[k]);
+            if (!fi.exists()) continue;
+            
+            const QString ext = fi.suffix().isEmpty() ? "png" : fi.suffix();
+            const QString rel = QString("streetscape/Node%1_%2.%3").arg(n.id).arg((int)k).arg(ext);
+            const QString absDst = QDir::cleanPath(projDir + "/" + rel);
+            
+            if (QFile::exists(absDst)) QFile::remove(absDst);
+            QFile::copy(fi.absoluteFilePath(), absDst);
+            
+            imgRelArr.append(rel);
+        }
+        no["streetscapes"] = imgRelArr;
+        
+        nodesArr.append(no);
+    }
+    rootObj["nodes"] = nodesArr;
+    
+    QJsonArray edgesArr;
+    for (const auto &e : m_edges) {
+        if (e.from < 0 || e.to < 0) continue;
+        if (e.polyline.empty()) continue;
+        
+        QJsonObject eo;
+        eo["id"] = e.id;
+        eo["from"] = e.from;
+        eo["to"] = e.to;
+        eo["length"] = e.length;
+        
+        QJsonArray polyArr;
+        for (const auto &p : e.polyline) {
+            QJsonArray pt;
+            pt.append(p.x());
+            pt.append(p.y());
+            polyArr.append(pt);
+        }
+        eo["polyline"] = polyArr;
+        
+        edgesArr.append(eo);
+    }
+    rootObj["edges"] = edgesArr;
+    
+    // 写入文件 guide_data/graph.json
+    const QString jsonPath = QDir::cleanPath(dataDir + "/graph.json");
+    QFile f(jsonPath);
+    if (!f.open(QIODevice::WriteOnly)) {
+        QMessageBox::warning(this, "保存失败", "graph.json 无法写入。");
+        return false;
+    }
+    f.write(QJsonDocument(rootObj).toJson(QJsonDocument::Indented));
+    f.close();
+    
+    return true;
+}

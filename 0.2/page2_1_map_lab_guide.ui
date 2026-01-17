@@ -1,0 +1,456 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>page2_1_map_lab_guide</class>
+ <widget class="QWidget" name="page2_1_map_lab_guide">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>360</width>
+    <height>640</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>360</width>
+    <height>640</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>360</width>
+    <height>640</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>地图工坊</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">/* 全局背景 */
+QWidget#page2_1_map_lab_guide {
+        background-color: #F5F7FA;
+}
+
+/* 顶部导航栏按钮 */
+QPushButton[class=&quot;navBtn&quot;] {
+        background-color: #FFFFFF;
+        color: #4A5568;
+        border: 1px solid #E2E8F0;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 12px;
+}
+QPushButton[class=&quot;navBtn&quot;]:hover {
+        background-color: #EDF2F7;
+        color: #2D3748;
+}
+
+/* 地图视图容器 */
+InteractiveView {
+        background-color: #E2E8F0;
+        border: 1px solid #CBD5E0;
+        border-radius: 12px;
+}
+
+/* 控制面板 */
+QFrame#controlPanel {
+        background-color: #FFFFFF;
+        border-bottom-left-radius: 16px;
+        border-bottom-right-radius: 16px;
+        border: 1px solid #EDF0F5;
+        border-top: none;
+}
+
+/* 分组标题 */
+QLabel {
+        color: #718096;
+        font-family: &quot;Microsoft YaHei&quot;;
+        font-size: 11px;
+        font-weight: bold;
+}
+
+/* --- 按钮样式：开始 (蓝色) --- */
+QPushButton[class=&quot;actionStart&quot;] {
+        background-color: #4A90E2;
+        color: white;
+        border-radius: 6px;
+        border: none;
+        font-weight: bold;
+        font-size: 12px;
+}
+QPushButton[class=&quot;actionStart&quot;]:hover {
+        background-color: #5B9DF2;
+}
+QPushButton[class=&quot;actionStart&quot;]:pressed {
+        background-color: #357ABD;
+}
+
+/* --- 按钮样式：撤回 (橙色) --- */
+QPushButton#pbUndo {
+        background-color: #FFFFF0;
+        color: #D69E2E;
+        border: 1px solid #F6E05E;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 12px;
+}
+QPushButton#pbUndo:hover {
+        background-color: #FEFCBF;
+        border: 1px solid #D69E2E;
+}
+QPushButton#pbUndo:pressed {
+        background-color: #F6E05E;
+        color: #744210;
+}
+
+/* --- 按钮样式：结束 (红色/淡红) --- */
+QPushButton[class=&quot;actionEnd&quot;] {
+        background-color: #FFF5F5;
+        color: #E53E3E;
+        border: 1px solid #FED7D7;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 12px;
+}
+QPushButton[class=&quot;actionEnd&quot;]:hover {
+        background-color: #FEB2B2;
+        color: #FFFFFF;
+        border: 1px solid #FEB2B2;
+}
+</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QWidget" name="topBar" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>50</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>50</height>
+      </size>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_Top">
+      <property name="leftMargin">
+       <number>12</number>
+      </property>
+      <property name="rightMargin">
+       <number>12</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="QPushButton" name="pbBack">
+        <property name="minimumSize">
+         <size>
+          <width>56</width>
+          <height>30</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>← 返回</string>
+        </property>
+        <property name="class" stdset="0">
+         <string>navBtn</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_Title">
+        <property name="text">
+         <string>地图工坊</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">font-size: 15px; color: #2D3748; background: transparent;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pbLoadMap">
+        <property name="minimumSize">
+         <size>
+          <width>66</width>
+          <height>30</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>导入地图</string>
+        </property>
+        <property name="class" stdset="0">
+         <string>navBtn</string>
+        </property>
+       </widget>
+      </item>
+
+      <item>
+       <widget class="QPushButton" name="btn_save_image">
+        <property name="minimumSize">
+         <size>
+          <width>66</width>
+          <height>30</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>保存截图</string>
+        </property>
+        <property name="class" stdset="0">
+         <string>navBtn</string>
+        </property>
+       </widget>
+      </item>
+      </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="controlPanel">
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_Control">
+      <property name="spacing">
+       <number>8</number>
+      </property>
+      <property name="leftMargin">
+       <number>16</number>
+      </property>
+      <property name="topMargin">
+       <number>10</number>
+      </property>
+      <property name="rightMargin">
+       <number>16</number>
+      </property>
+      <property name="bottomMargin">
+       <number>16</number>
+      </property>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_Label">
+        <property name="spacing">
+         <number>8</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="lbl_LabelMode">
+          <property name="maximumSize">
+           <size>
+            <width>55</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>标注模式</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pbStartLabel">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>开始标注</string>
+          </property>
+          <property name="class" stdset="0">
+           <string>actionStart</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pbUndo">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>撤回</string>
+          </property>
+          <property name="cursor">
+           <cursorShape>PointingHandCursor</cursorShape>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pbEndLabel">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>保存</string>
+          </property>
+          <property name="class" stdset="0">
+           <string>actionEnd</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="Line" name="line">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: #EDF0F5;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_Guide">
+        <property name="spacing">
+         <number>8</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="lbl_GuideMode">
+          <property name="maximumSize">
+           <size>
+            <width>55</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>导航模式</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pbStartGuide">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>开始导航</string>
+          </property>
+          <property name="class" stdset="0">
+           <string>actionStart</string>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: #48BB78;</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pbEndGuide">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>结束导航</string>
+          </property>
+          <property name="class" stdset="0">
+           <string>actionEnd</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_Map" stretch="1">
+     <property name="leftMargin">
+      <number>20</number>
+     </property>
+     <property name="rightMargin">
+      <number>20</number>
+     </property>
+     <property name="topMargin">
+      <number>4</number>
+     </property>
+     <property name="bottomMargin">
+      <number>30</number>
+     </property>
+     <item>
+      <widget class="InteractiveView" name="graphicsView">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="renderHints">
+        <set>QPainter::Antialiasing|QPainter::SmoothPixmapTransform|QPainter::TextAntialiasing</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>InteractiveView</class>
+   <extends>QGraphicsView</extends>
+   <header>interactiveview.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
